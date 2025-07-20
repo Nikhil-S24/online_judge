@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Up</title>
+</head>
+<body>
+    <h2>Create an Account</h2>
+
+    {% if messages %}
+        <ul style="color: red;">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <p>
+            <label>Full Name:</label>
+            <input type="text" name="name" required>
+        </p>
+        <p>
+            <label>Username:</label>
+            <input type="text" name="username" required>
+        </p>
+        <p>
+            <label>Email ID:</label>
+            <input type="email" name="email" required>
+        </p>
+        <p>
+            <label>Password (min 8 chars, alphanumeric):</label>
+            <input type="password" name="password1" required>
+        </p>
+        <p>
+            <label>Re-enter Password:</label>
+            <input type="password" name="password2" required>
+        </p>
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already have an account? <a href="{% url 'login' %}">Login here</a>.</p>
+</body>
+</html>
