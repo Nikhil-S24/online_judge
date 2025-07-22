@@ -1,0 +1,44 @@
+from django.shortcuts import render, get_object_or_404
+from .models import Topic, Problem
+
+def topics_list(request):
+    topics = Topic.objects.all()
+    return render(request, 'problems/topics_list.html', {'topics': topics})
+
+def topic_problems(request, topic_id):
+    topic = get_object_or_404(Topic, id=topic_id)
+    problems = Problem.objects.filter(topic=topic)
+
+    search_query = request.GET.get('search', '')
+    sort_order = request.GET.get('sort', '')
+
+    if search_query:
+        problems = problems.filter(title__icontains=search_query)
+
+    if sort_order:
+        problems = problems.order_by('difficulty' if sort_order == 'asc' else '-difficulty')
+
+    return render(request, 'problems/topic_problems.html', {
+        'topic': topic,
+        'problems': problems
+    })
+
+def problem_detail(request, pk):
+    problem = get_object_or_404(Problem, pk=pk)
+    languages = ['Python', 'C++', 'Java', 'JavaScript']
+
+    if request.method == 'POST':
+        selected_language = request.POST.get('language')
+        user_code = request.POST.get('code')
+        return render(request, 'problems/problem_detail.html', {
+            'problem': problem,
+            'languages': languages,
+            'selected_language': selected_language,
+            'user_code': user_code,
+            'submitted': True
+        })
+
+    return render(request, 'problems/problem_detail.html', {
+        'problem': problem,
+        'languages': languages
+    })

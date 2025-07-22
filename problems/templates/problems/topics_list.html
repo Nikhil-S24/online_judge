@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Topics</title>
+</head>
+<body>
+    <h1>Topics</h1>
+<ul>
+  {% for topic in topics %}
+    <li><a href="{% url 'topic_problems' topic.id %}">{{ topic.name }}</a></li>
+  {% empty %}
+    <li>No topics available.</li>
+  {% endfor %}
+</ul>
+
+</body>
+</html>

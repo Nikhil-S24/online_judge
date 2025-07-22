@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ topic.name }} Problems</title>
+</head>
+<body>
+    <h1>Problems in {{ topic.name }}</h1>
+
+<form method="get">
+  <input type="text" name="search" placeholder="Search by title..." value="{{ request.GET.search }}">
+  <select name="sort">
+    <option value="">Sort by difficulty</option>
+    <option value="asc" {% if request.GET.sort == 'asc' %}selected{% endif %}>Easy to Hard</option>
+    <option value="desc" {% if request.GET.sort == 'desc' %}selected{% endif %}>Hard to Easy</option>
+  </select>
+  <button type="submit">Apply</button>
+</form>
+
+<ul>
+  {% for problem in problems %}
+    <li>
+      <a href="{% url 'problem_detail' problem.id %}">
+        {{ problem.title }} ({{ problem.difficulty }})
+      </a>
+    </li>
+  {% empty %}
+    <li>No problems found.</li>
+  {% endfor %}
+</ul>
+
+    <p><a href="{% url 'topics' %}">← Back to Topics</a></p>
+</body>
+</html>

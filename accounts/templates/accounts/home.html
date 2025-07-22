@@ -25,14 +25,15 @@
 </head>
 <body>
     {% if messages %}
-        <ul style="color: green;">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+  {% for message in messages %}
+    <p style="color: green;">{{ message }}</p>
+  {% endfor %}
+{% endif %}
 
-    <h2>Welcome, {{ user.first_name }}!</h2>
-    <p><a href="{% url 'logout' %}">Logout</a></p>
+<h2>Welcome, {{ user.get_full_name }}!</h2>
+
+<p><a href="{% url 'topics' %}">View Problem Topics</a></p>
+<p><a href="{% url 'logout' %}">Logout</a></p>
+
 </body>
 </html>

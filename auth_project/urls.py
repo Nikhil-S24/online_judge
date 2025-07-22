@@ -32,4 +32,5 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('signup/', views.signup, name='signup'),
     path('accounts/login/', views.custom_login),  # support redirect from @login_required
+    path('',include('problems.urls')),
 ]
