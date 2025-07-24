@@ -6,7 +6,7 @@
 <body>
     <h1>Problems in {{ topic.name }}</h1>
 
-<form method="get">
+<!-- <form method="get">
   <input type="text" name="search" placeholder="Search by title..." value="{{ request.GET.search }}">
   <select name="sort">
     <option value="">Sort by difficulty</option>
@@ -14,6 +14,18 @@
     <option value="desc" {% if request.GET.sort == 'desc' %}selected{% endif %}>Hard to Easy</option>
   </select>
   <button type="submit">Apply</button>
+</form> -->
+
+<form method="get">
+    <input type="text" name="search" placeholder="Search by title..." value="{{ search_query }}">
+    <select name="sort">
+        <option value="">Sort By</option>
+        <option value="difficulty_asc" {% if sort_order == 'difficulty_asc' %}selected{% endif %}>Easy to Hard</option>
+        <option value="difficulty_desc" {% if sort_order == 'difficulty_desc' %}selected{% endif %}>Hard to Easy</option>
+        <!-- <option value="title_asc" {% if sort_order == 'title_asc' %}selected{% endif %}>Title A–Z</option>
+        <option value="title_desc" {% if sort_order == 'title_desc' %}selected{% endif %}>Title Z–A</option> -->
+    </select>
+    <button type="submit">Apply</button>
 </form>
 
 <ul>
