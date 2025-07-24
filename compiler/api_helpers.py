@@ -34,7 +34,7 @@ def submit_code(source_code, language_id, stdin=""):
 
     raise TimeoutError("Execution took too long.")
 
-# ✅ ADD THIS:
+
 def get_language_id(language):
     mapping = {
         "python": 71,

@@ -15,7 +15,7 @@
             <p>{{ problem.description|safe }}</p>
         </div>
 
-        <!-- Code Submission Form -->
+        
         <form id="code-form">
             <div class="mb-3">
                 <label for="language" class="form-label"><strong>Select Language:</strong></label>
@@ -36,14 +36,14 @@
             <button type="submit" class="btn btn-primary">Run Code</button>
         </form>
 
-        <!-- Output Section -->
+        
         <div class="mt-4">
             <h4>Output:</h4>
             <pre id="output-text" class="bg-light p-3 border rounded" style="white-space: pre-wrap;"></pre>
         </div>
     </div>
 
-    <!-- JavaScript -->
+    
     <script>
         document.getElementById('code-form').addEventListener('submit', async function(e) {
             e.preventDefault();

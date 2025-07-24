@@ -4,7 +4,6 @@ from django.http import JsonResponse
 import json
 from .api_helpers import submit_code
 
-# Corrected language map
 LANGUAGE_ID_MAP = {
     "c": 50,
     "cpp": 54,
