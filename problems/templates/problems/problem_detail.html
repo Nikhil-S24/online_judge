@@ -15,7 +15,6 @@
             <p>{{ problem.description|safe }}</p>
         </div>
 
-        
         <form id="code-form">
             <div class="mb-3">
                 <label for="language" class="form-label"><strong>Select Language:</strong></label>
@@ -30,26 +29,66 @@
 
             <div class="mb-3">
                 <label for="code" class="form-label"><strong>Enter Your Code:</strong></label>
-                <textarea name="code" id="code" rows="15" class="form-control" placeholder="# Write your code here..." required></textarea>
+                <textarea name="code" id="code" rows="15" class="form-control" placeholder="# Write your code here..." required>{{ last_submission_code }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="stdin" class="form-label"><strong>Custom Input (Optional):</strong></label>
+                <textarea name="stdin" id="stdin" rows="5" class="form-control" placeholder="Input to pass to your program..."></textarea>
             </div>
 
             <button type="submit" class="btn btn-primary">Run Code</button>
         </form>
 
-        
         <div class="mt-4">
-            <h4>Output:</h4>
+            <div id="verdict-box" class="mt-3" style="display: none;"></div>
+
+            <h4 class="mt-4">Output:</h4>
             <pre id="output-text" class="bg-light p-3 border rounded" style="white-space: pre-wrap;"></pre>
         </div>
+
+        {% if verdict_history %}
+        <div class="mt-5">
+            <h4>Your Submission History</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Language</th>
+                        <th>Verdict</th>
+                        <th>Submitted At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in verdict_history %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ sub.language|title }}</td>
+                        <td>
+                            {% if sub.verdict == "Accepted" %}
+                                <span class="text-success">{{ sub.verdict }}</span>
+                            {% elif sub.verdict == "Rejected" or sub.verdict == "Wrong Answer" %}
+                                <span class="text-danger">{{ sub.verdict }}</span>
+                            {% else %}
+                                <span class="text-warning">{{ sub.verdict }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ sub.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
     </div>
 
-    
     <script>
         document.getElementById('code-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const language = document.getElementById('language').value;
             const code = document.getElementById('code').value;
+            const stdin = document.getElementById('stdin').value;
             const csrfToken = document.querySelector('[name=csrf-token]').content;
 
             try {
@@ -61,16 +100,38 @@
                     },
                     body: JSON.stringify({
                         language: language,
-                        source_code: code
+                        source_code: code,
+                        stdin: stdin,
+                        problem_id: "{{ problem.id }}"
                     })
                 });
 
                 const data = await response.json();
 
-                document.getElementById('output-text').innerText =
-                    data.stdout || data.stderr || data.error || 'No output or error.';
+                const verdictBox = document.getElementById('verdict-box');
+                verdictBox.style.display = 'block';
+
+                let verdictText = data.verdict || 'Unknown';
+                let alertClass = 'alert-warning';
+
+                if (verdictText === 'Accepted') {
+                    alertClass = 'alert-success';
+                } else if (verdictText === 'Rejected' || verdictText === 'Wrong Answer') {
+                    alertClass = 'alert-danger';
+                }
+
+                verdictBox.className = 'alert mt-3 ' + alertClass;
+                verdictBox.innerText = 'Verdict: ' + verdictText;
+
+                const output = data.stdout || data.stderr || data.error || 'No output or error.';
+                document.getElementById('output-text').innerText = output;
+
             } catch (error) {
                 document.getElementById('output-text').innerText = 'Request failed: ' + error;
+                const verdictBox = document.getElementById('verdict-box');
+                verdictBox.style.display = 'block';
+                verdictBox.className = 'alert alert-danger mt-3';
+                verdictBox.innerText = 'Verdict: Error';
             }
         });
     </script>

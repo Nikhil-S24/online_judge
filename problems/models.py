@@ -15,6 +15,7 @@ class Problem(models.Model):
         ('Medium', 'Medium'),
         ('Hard', 'Hard')
     ])
+    expected_output = models.TextField()
 
     def __str__(self):
         return self.title
