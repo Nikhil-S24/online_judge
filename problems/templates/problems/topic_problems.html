@@ -2,34 +2,42 @@
 <html>
 <head>
     <title>{{ topic.name }} Problems</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Problems in {{ topic.name }}</h1>
+<div class="container mt-5">
+    <h2 class="mb-4">Problems in <span class="text-primary">{{ topic.name }}</span></h2>
 
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-6">
+            <input type="text" name="search" class="form-control" placeholder="Search by title..." value="{{ search_query }}">
+        </div>
+        <div class="col-md-4">
+            <select name="sort" class="form-select">
+                <option value="">Sort By</option>
+                <option value="difficulty_asc" {% if sort_order == 'difficulty_asc' %}selected{% endif %}>Easy to Hard</option>
+                <option value="difficulty_desc" {% if sort_order == 'difficulty_desc' %}selected{% endif %}>Hard to Easy</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Apply</button>
+        </div>
+    </form>
 
-<form method="get">
-    <input type="text" name="search" placeholder="Search by title..." value="{{ search_query }}">
-    <select name="sort">
-        <option value="">Sort By</option>
-        <option value="difficulty_asc" {% if sort_order == 'difficulty_asc' %}selected{% endif %}>Easy to Hard</option>
-        <option value="difficulty_desc" {% if sort_order == 'difficulty_desc' %}selected{% endif %}>Hard to Easy</option>
-        
-    </select>
-    <button type="submit">Apply</button>
-</form>
+    <div class="list-group">
+        {% for problem in problems %}
+            <a href="{% url 'problem_detail' problem.id %}" class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ problem.title }}</strong>
+                    <span class="badge bg-secondary">{{ problem.difficulty }}</span>
+                </div>
+            </a>
+        {% empty %}
+            <div class="alert alert-warning">No problems found.</div>
+        {% endfor %}
+    </div>
 
-<ul>
-  {% for problem in problems %}
-    <li>
-      <a href="{% url 'problem_detail' problem.id %}">
-        {{ problem.title }} ({{ problem.difficulty }})
-      </a>
-    </li>
-  {% empty %}
-    <li>No problems found.</li>
-  {% endfor %}
-</ul>
-
-    <p><a href="{% url 'topics' %}">← Back to Topics</a></p>
+    <a href="{% url 'topics' %}" class="btn btn-secondary mt-4">← Back to Topics</a>
+</div>
 </body>
 </html>

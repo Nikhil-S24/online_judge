@@ -1,8 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from django.contrib.auth.models import AnonymousUser
-from problems.models import Problem
+from django.contrib.auth.decorators import login_required
+from problems.models import Problem, TestCase
 from .models import Submission
 from .api_helpers import submit_code
 import json
@@ -23,7 +23,6 @@ def compile_code(request):
 
             source_code = data.get("source_code", "")
             language = data.get("language", "python").lower()
-            stdin = data.get("stdin", "")
             problem_id = data.get("problem_id")
 
             if not source_code:
@@ -33,28 +32,56 @@ def compile_code(request):
             if not language_id:
                 return JsonResponse({"error": "Unsupported language."}, status=400)
 
-            result = submit_code(source_code, language_id, stdin)
+            # Get the problem and all its test cases
+            problem = get_object_or_404(Problem, id=problem_id)
+            test_cases = TestCase.objects.filter(problem=problem)
 
-            verdict = "Failed"
-            actual_output = result.get("stdout", "").strip() if result.get("stdout") else ""
-            stderr = result.get("stderr", "")
-            status_id = result.get("status", {}).get("id", 0)
-            status_description = result.get("status", {}).get("description", "Error")
+            if not test_cases.exists():
+                return JsonResponse({"error": "No test cases found for this problem."}, status=404)
 
-            problem = None
-            try:
-                problem = Problem.objects.get(id=problem_id)
-            except Problem.DoesNotExist:
-                return JsonResponse({"error": "Problem not found."}, status=404)
+            results = []
+            all_passed = True
 
-            if status_id == 3:  # Successfully Compiled & Executed
-                expected_output = problem.expected_output.strip()
-                if actual_output == expected_output:
-                    verdict = "Accepted"
+            for test_case in test_cases:
+                result = submit_code(source_code, language_id, test_case.input_data)
+
+                actual_output = result.get("stdout", "").strip() if result.get("stdout") else ""
+                stderr = result.get("stderr", "")
+                status_id = result.get("status", {}).get("id", 0)
+                status_description = result.get("status", {}).get("description", "Error")
+                expected_output = test_case.expected_output.strip()
+
+                if status_id != 3:  # Not successful
+                    all_passed = False
+                    results.append({
+                        "input": test_case.input_data,
+                        "expected_output": expected_output,
+                        "actual_output": actual_output,
+                        "stderr": stderr,
+                        "status": status_description,
+                        "verdict": status_description
+                    })
+                elif actual_output != expected_output:
+                    all_passed = False
+                    results.append({
+                        "input": test_case.input_data,
+                        "expected_output": expected_output,
+                        "actual_output": actual_output,
+                        "stderr": stderr,
+                        "status": "Wrong Answer",
+                        "verdict": "Wrong Answer"
+                    })
                 else:
-                    verdict = "Wrong Answer"
-            else:
-                verdict = status_description
+                    results.append({
+                        "input": test_case.input_data,
+                        "expected_output": expected_output,
+                        "actual_output": actual_output,
+                        "stderr": stderr,
+                        "status": "Accepted",
+                        "verdict": "Accepted"
+                    })
+
+            final_verdict = "Accepted" if all_passed else "Wrong Answer"
 
             if request.user.is_authenticated:
                 Submission.objects.create(
@@ -62,16 +89,37 @@ def compile_code(request):
                     problem=problem,
                     code=source_code,
                     language=language,
-                    verdict=verdict
+                    verdict=final_verdict
                 )
 
             return JsonResponse({
-                "stdout": actual_output,
-                "stderr": stderr,
-                "verdict": verdict
+                "verdict": final_verdict,
+                "results": results
             })
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Only POST method allowed."}, status=405)
+
+
+@login_required
+def submission_history(request, problem_id):
+    problem = get_object_or_404(Problem, id=problem_id)
+    submissions = Submission.objects.filter(user=request.user, problem=problem).order_by('-submitted_at')
+    return render(request, 'compiler/submission_history.html', {
+        'problem': problem,
+        'submissions': submissions
+    })
+
+
+@login_required
+def submission_detail(request, submission_id):
+    submission = get_object_or_404(Submission, id=submission_id)
+
+    if submission.user != request.user and not request.user.is_staff:
+        return render(request, "403.html", status=403)
+
+    return render(request, "compiler/submission_detail.html", {
+        "submission": submission
+    })

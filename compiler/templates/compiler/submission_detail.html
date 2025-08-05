@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow p-4">
+    <h2 class="mb-4 text-primary">Submission Details</h2>
+
+    <ul class="list-group mb-4">
+      <li class="list-group-item"><strong>Problem:</strong> {{ submission.problem.title }}</li>
+      <li class="list-group-item"><strong>Language:</strong> {{ submission.language }}</li>
+      <li class="list-group-item"><strong>Verdict:</strong>
+        <span class="badge {% if submission.verdict == 'Accepted' %}bg-success{% else %}bg-danger{% endif %}">
+          {{ submission.verdict }}
+        </span>
+      </li>
+      <li class="list-group-item"><strong>Submitted At:</strong> {{ submission.submitted_at }}</li>
+    </ul>
+
+    <form id="resubmitForm">
+      {% csrf_token %}
+      <input type="hidden" id="problem_id" value="{{ submission.problem.id }}">
+
+      <div class="mb-3">
+        <label for="language" class="form-label">Language</label>
+        <select id="language" name="language" class="form-select">
+          <option value="python" {% if submission.language == "python" %}selected{% endif %}>Python</option>
+          <option value="cpp" {% if submission.language == "cpp" %}selected{% endif %}>C++</option>
+          <option value="java" {% if submission.language == "java" %}selected{% endif %}>Java</option>
+          <option value="c" {% if submission.language == "c" %}selected{% endif %}>C</option>
+          <option value="javascript" {% if submission.language == "javascript" %}selected{% endif %}>JavaScript</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="source_code" class="form-label">Code</label>
+        <textarea id="source_code" name="source_code" rows="15" class="form-control">{{ submission.code }}</textarea>
+      </div>
+
+      <button type="button" class="btn btn-primary" onclick="submitCode()">Resubmit</button>
+    </form>
+
+    <div id="result" class="mt-4"></div>
+  </div>
+</div>
+
+<script>
+  function submitCode() {
+    const sourceCode = document.getElementById("source_code").value;
+    const language = document.getElementById("language").value;
+    const problemId = document.getElementById("problem_id").value;
+
+    fetch("{% url 'compile_code' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({
+        source_code: sourceCode,
+        language: language,
+        problem_id: problemId
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const resultDiv = document.getElementById("result");
+      if (data.verdict) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-info"><strong>Verdict:</strong> ${data.verdict}</div>
+          <div class="mb-3"><label><strong>Stdout</strong></label><pre class="bg-light p-3 border rounded">${data.stdout || "None"}</pre></div>
+          <div><label><strong>Stderr</strong></label><pre class="bg-light p-3 border rounded">${data.stderr || "None"}</pre></div>`;
+      } else {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${data.error}</div>`;
+      }
+    });
+  }
+</script>
+{% endblock %}
