@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>My Submissions</h2>
+{% if submissions %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Problem</th>
+            <th>Language</th>
+            <th>Verdict</th>
+            <th>Submitted At</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for submission in submissions %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ submission.problem.title }}</td>
+            <td>{{ submission.language|title }}</td>
+            <td>
+                {% if submission.verdict == "Accepted" %}
+                    <span class="text-success">{{ submission.verdict }}</span>
+                {% elif submission.verdict == "Wrong Answer" %}
+                    <span class="text-danger">{{ submission.verdict }}</span>
+                {% else %}
+                    {{ submission.verdict }}
+                {% endif %}
+            </td>
+            <td>{{ submission.submitted_at|date:"Y-m-d H:i:s" }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>You have not made any submissions yet.</p>
+{% endif %}
+{% endblock %}

@@ -1,12 +1,14 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Topic, Problem
 from django.db.models import Case, When, Value, IntegerField
+from django.contrib.auth.decorators import login_required
 
-
+@login_required
 def topics_list(request):
     topics = Topic.objects.all()
     return render(request, 'problems/topics_list.html', {'topics': topics})
 
+@login_required
 def topic_problems(request, topic_id):
     topic = get_object_or_404(Topic, id=topic_id)
     problems = Problem.objects.filter(topic=topic)
@@ -16,9 +18,6 @@ def topic_problems(request, topic_id):
 
     if search_query:
         problems = problems.filter(title__icontains=search_query)
-
-    # if sort_order:
-    #     problems = problems.order_by('difficulty' if sort_order == 'asc' else '-difficulty')
 
     if sort_order == 'title_asc':
         problems = problems.order_by('title')
@@ -43,12 +42,12 @@ def topic_problems(request, topic_id):
             )
         ).order_by('-difficulty_order')
 
-
     return render(request, 'problems/topic_problems.html', {
         'topic': topic,
         'problems': problems
     })
 
+@login_required
 def problem_detail(request, pk):
     problem = get_object_or_404(Problem, pk=pk)
     languages = ['Python', 'C++', 'Java', 'JavaScript']

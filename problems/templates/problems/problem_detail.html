@@ -7,18 +7,23 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 <body>
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">Online Judge</a>
+            <a class="navbar-brand" href="/">Code Arena</a>
         </div>
     </nav>
 
+    <!-- Problem Section -->
     <div class="container mt-5">
         <div class="mb-4">
             <h2 class="fw-bold">{{ problem.title }}</h2>
-            <p class="text-muted">Difficulty: <span class="badge bg-secondary">{{ problem.difficulty }}</span></p>
+            <p class="text-muted">Difficulty: 
+                <span class="badge bg-secondary">{{ problem.difficulty }}</span>
+            </p>
         </div>
 
+        <!-- Problem Description -->
         <div class="mb-4">
             <h5 class="fw-semibold">Problem Description</h5>
             <div class="p-3 border rounded bg-light">
@@ -26,15 +31,16 @@
             </div>
         </div>
 
+        <!-- Code Submission Form -->
         <form id="code-form" class="mt-4">
             <div class="mb-3">
                 <label for="language" class="form-label fw-semibold">Select Language</label>
                 <select name="language" id="language" class="form-select" required>
                     <option value="">-- Select --</option>
-                    <option value="python" {% if last_submission_language == "python" %}selected{% endif %}>Python</option>
-                    <option value="cpp" {% if last_submission_language == "cpp" %}selected{% endif %}>C++</option>
-                    <option value="java" {% if last_submission_language == "java" %}selected{% endif %}>Java</option>
-                    <option value="javascript" {% if last_submission_language == "javascript" %}selected{% endif %}>JavaScript</option>
+                    <option value="71" {% if last_submission_language == "71" %}selected{% endif %}>Python</option>
+                    <option value="54" {% if last_submission_language == "54" %}selected{% endif %}>C++</option>
+                    <option value="62" {% if last_submission_language == "62" %}selected{% endif %}>Java</option>
+                    <option value="63" {% if last_submission_language == "63" %}selected{% endif %}>JavaScript</option>
                 </select>
             </div>
 
@@ -44,20 +50,36 @@
             </div>
 
             <div class="mb-3">
-                <label for="stdin" class="form-label fw-semibold">Custom Input <small class="text-muted">(optional)</small></label>
+                <label for="stdin" class="form-label fw-semibold">Custom Input 
+                    <small class="text-muted">(optional)</small>
+                </label>
                 <textarea name="stdin" id="stdin" rows="4" class="form-control" placeholder="Input to pass to your program..."></textarea>
             </div>
-
-            <button type="submit" class="btn btn-success px-4">Run Code</button>
+            <div class="mb-3">
+                <label for="expected_output" class="form-label fw-semibold">Expected Output for Custom Input
+                    <small class="text-muted">(optional)</small>
+                </label>
+                <textarea name="expected_output" id="expected_output" rows="4" class="form-control" placeholder="Expected output for your custom input..."></textarea>
+            </div>
+            <!-- Run / Submit Buttons -->
+            <div class="row g-2">
+                <div class="col-md-6 d-grid">
+                    <button type="button" id="run-btn" class="btn btn-success">Run</button>
+                </div>
+                <div class="col-md-6 d-grid">
+                    <button type="button" id="submit-btn" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
         </form>
 
+        <!-- Verdict & Output -->
         <div class="mt-4">
             <div id="verdict-box" class="mt-3" style="display: none;"></div>
-
             <h5 class="mt-4 fw-semibold">Output</h5>
             <pre id="output-text" class="bg-light p-3 border rounded" style="white-space: pre-wrap; min-height: 100px;"></pre>
         </div>
 
+        <!-- Submission History -->
         {% if verdict_history %}
         <div class="mt-5">
             <h4 class="fw-bold mb-3">Your Submission History</h4>
@@ -95,58 +117,121 @@
         {% endif %}
     </div>
 
-    <script>
-        document.getElementById('code-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
+    <!-- Script -->
+    // New script for: auth_project/problems/templates/problems/problem_detail.html
 
-            const language = document.getElementById('language').value;
-            const code = document.getElementById('code').value;
-            const stdin = document.getElementById('stdin').value;
-            const csrfToken = document.querySelector('[name=csrf-token]').content;
+<script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const verdictBox = document.getElementById('verdict-box');
+    const outputText = document.getElementById('output-text');
 
-            try {
-                const response = await fetch('/compiler/compile/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({
-                        language: language,
-                        source_code: code,
-                        stdin: stdin,
-                        problem_id: "{{ problem.id }}"
-                    })
-                });
+    // Function specifically for the "Run 
+    
+async function handleRun() {
+    const language = document.getElementById('language').value;
+    const code = document.getElementById('code').value;
+    const stdin = document.getElementById('stdin').value;
+    // This gets the text from the new "Expected Output" box
+    const expected_output = document.getElementById('expected_output').value; 
 
-                const data = await response.json();
+    // Show a "Running..." message
+    verdictBox.style.display = 'block';
+    verdictBox.className = 'alert alert-info';
+    verdictBox.innerText = 'Verdict: Running...';
+    outputText.innerText = 'Running with custom input...';
 
-                const verdictBox = document.getElementById('verdict-box');
-                verdictBox.style.display = 'block';
-
-                let verdictText = data.verdict || 'Unknown';
-                let alertClass = 'alert-warning';
-
-                if (verdictText === 'Accepted') {
-                    alertClass = 'alert-success';
-                } else if (verdictText === 'Rejected' || verdictText === 'Wrong Answer') {
-                    alertClass = 'alert-danger';
-                }
-
-                verdictBox.className = 'alert ' + alertClass + ' mt-3';
-                verdictBox.innerText = 'Verdict: ' + verdictText;
-
-                const output = data.stdout || data.stderr || data.error || 'No output or error.';
-                document.getElementById('output-text').innerText = output;
-            } catch (error) {
-                const verdictBox = document.getElementById('verdict-box');
-                verdictBox.style.display = 'block';
-                verdictBox.className = 'alert alert-danger mt-3';
-                verdictBox.innerText = 'Verdict: Error';
-
-                document.getElementById('output-text').innerText = 'Request failed: ' + error;
-            }
+    try {
+        const response = await fetch("{% url 'run_code' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                language: language,
+                source_code: code,
+                stdin: stdin,
+                expected_output: expected_output // This sends the expected output to the backend
+            })
         });
-    </script>
+        const data = await response.json();
+
+        // This new part displays the verdict from the server
+        if (data.verdict) {
+            let verdictText = data.verdict;
+            let alertClass = 'alert-warning';
+            if (verdictText === 'Accepted') alertClass = 'alert-success';
+            else if (verdictText.includes('Wrong') || verdictText.includes('Error')) alertClass = 'alert-danger';
+            verdictBox.className = 'alert ' + alertClass;
+            verdictBox.innerText = 'Verdict: ' + verdictText;
+        } else {
+            verdictBox.style.display = 'none'; // Hide the verdict box if you didn't provide an expected output
+        }
+
+        // This part displays the output, same as before
+        let formattedOutput = "--- Custom Run Output ---\n\n";
+        if (data.stdout) formattedOutput += `Output (stdout):\n${data.stdout}\n\n`;
+        if (data.stderr) formattedOutput += `Error (stderr):\n${data.stderr}\n\n`;
+        if (!data.stdout && !data.stderr) formattedOutput += "No output was produced.";
+        outputText.innerText = formattedOutput;
+
+    } catch (error) {
+        verdictBox.className = 'alert alert-danger';
+        verdictBox.innerText = 'Verdict: Client-side Error';
+        outputText.innerText = 'Request failed: ' + error;
+    }
+}
+    // Function for the "Submit" button (this is your existing, working code)
+    async function handleSubmit() {
+        const language = document.getElementById('language').value;
+        const code = document.getElementById('code').value;
+
+        verdictBox.style.display = 'block';
+        verdictBox.className = 'alert alert-info';
+        verdictBox.innerText = 'Verdict: Submitting...';
+        outputText.innerText = 'Waiting for the server to respond...';
+        
+        try {
+            const response = await fetch("{% url 'submit_code' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({
+                    language: language,
+                    source_code: code,
+                    problem_id: "{{ problem.id }}"
+                })
+            });
+            const data = await response.json();
+            
+            let verdictText = data.verdict || 'Error';
+            let alertClass = 'alert-warning';
+            if (verdictText === 'Accepted') alertClass = 'alert-success';
+            else if (verdictText.includes('Wrong') || verdictText.includes('Error')) alertClass = 'alert-danger';
+            
+            verdictBox.className = 'alert ' + alertClass;
+            verdictBox.innerText = 'Verdict: ' + verdictText;
+
+            if (data.results && data.results.length > 0) {
+                let formattedOutput = '';
+                data.results.forEach((res, i) => {
+                    formattedOutput += `--- Test Case ${i + 1}: ${res.status} ---\n\n`;
+                    formattedOutput += `Input:\n${res.input.trim()}\n\n`;
+                    formattedOutput += `Expected Output:\n${res.expected_output.trim()}\n\n`;
+                    formattedOutput += `Your Output:\n${res.actual_output.trim()}\n\n`;
+                    if (res.stderr) formattedOutput += `Error Output (stderr):\n${res.stderr}\n`;
+                });
+                outputText.innerText = formattedOutput;
+            } else {
+                outputText.innerText = data.error || 'No detailed output was provided.';
+            }
+
+        } catch (error) {
+            verdictBox.className = 'alert alert-danger';
+            verdictBox.innerText = 'Verdict: Client-side Error';
+            outputText.innerText = 'The request failed. Error: ' + error;
+        }
+    }
+
+    // Attach the new functions to the correct buttons
+    document.getElementById('run-btn').addEventListener('click', handleRun);
+    document.getElementById('submit-btn').addEventListener('click', handleSubmit);
+</script>
 </body>
 </html>

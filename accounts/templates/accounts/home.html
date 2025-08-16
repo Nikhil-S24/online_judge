@@ -1,22 +1,3 @@
-<!-- <!DOCTYPE html>
-<html>
-<head>
-    <title>Home</title>
-</head>
-<body>
-    {% if messages %}
-        <ul style="color: green;">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    <h2>Welcome, {{ user.username }}!</h2>
-    <p><a href="{% url 'logout' %}">Logout</a></p>
-</body>
-</html> -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,10 +19,13 @@
 
         <div class="card shadow-sm border-0">
             <div class="card-body">
-                <h2 class="card-title mb-4">Welcome, {{ user.get_full_name }}!</h2>
+                <h2 class="card-title mb-4">
+                    Welcome, {{ user.get_full_name|default:user.username }}!
+                </h2>
 
                 <div class="d-grid gap-3">
                     <a href="{% url 'topics' %}" class="btn btn-primary btn-lg">View Problem Topics</a>
+                    
                     <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-lg">Logout</a>
                 </div>
             </div>

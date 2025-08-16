@@ -57,7 +57,7 @@ ROOT_URLCONF = 'auth_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -130,3 +130,5 @@ LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = '/login/'
 # LOGIN_REDIRECT_URL = '/'
 # LOGOUT_REDIRECT_URL = '/login/'
+
+RAPIDAPI_KEY = "b44d14ec2dmsh7ea5ed3fdbaeb1dp1042dbjsnb5fc42520f0c"
