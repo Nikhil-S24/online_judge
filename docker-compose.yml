@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # 1. The PostgreSQL Database for your Django App
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  # 2. The Redis Server
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # 3. Your Django Web App
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env # This tells Docker to load the secrets from our .env file
+    environment:
+      - DB_HOST=db # Tells Django the database is at the address 'db'
+
+volumes:
+  postgres_data:

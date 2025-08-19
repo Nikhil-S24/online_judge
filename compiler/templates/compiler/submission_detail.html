@@ -55,20 +55,36 @@
       let resultDiv = document.getElementById("result");
       if (data.verdict) {
         let outputHtml = `<div class="alert alert-info"><strong>Verdict:</strong> ${data.verdict}</div>`;
+        
         if (data.results) {
           data.results.forEach((res, i) => {
             outputHtml += `
-              <div class="mb-3">
-                <h6>Test Case ${i + 1}</h6>
-                <label><strong>Input</strong></label>
-                <pre class="bg-light p-3 border rounded">${res.input.trim()}</pre>
-                <label><strong>Expected Output</strong></label>
-                <pre class="bg-light p-3 border rounded">${res.expected_output.trim()}</pre>
-                <label><strong>Actual Output</strong></label>
-                <pre class="bg-light p-3 border rounded">${res.actual_output.trim()}</pre>
-                <label><strong>Stderr</strong></label>
-                <pre class="bg-light p-3 border rounded">${res.stderr || "None"}</pre>
-                <p><strong>Status:</strong> ${res.status}</p>
+              <div class="card mb-3">
+                <div class="card-body">
+                  <h6>Test Case ${i + 1}</h6>
+                  <p><strong>Input:</strong></p>
+                  <pre class="bg-light p-2 border rounded">${res.input.trim()}</pre>
+                  
+                  <p><strong>Expected Output:</strong></p>
+                  <pre class="bg-light p-2 border rounded">${res.expected_output.trim()}</pre>
+                  
+                  <p><strong>Actual Output:</strong></p>
+                  <pre class="bg-light p-2 border rounded">${res.actual_output ? res.actual_output.trim() : "No Output"}</pre>
+                  
+                  ${res.compile_output ? `
+                    <p class="text-warning"><strong>Compilation Error:</strong></p>
+                    <pre class="bg-light p-2 border rounded">${res.compile_output.trim()}</pre>` : ""}
+                  
+                  ${res.stderr ? `
+                    <p class="text-danger"><strong>Runtime Error:</strong></p>
+                    <pre class="bg-light p-2 border rounded">${res.stderr.trim()}</pre>` : ""}
+                  
+                  <p><strong>Status:</strong> 
+                    ${res.status === "Passed" 
+                      ? `<span class="badge bg-success">Passed</span>` 
+                      : `<span class="badge bg-danger">${res.status}</span>`}
+                  </p>
+                </div>
               </div>`;
           });
         }
