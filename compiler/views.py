@@ -10,15 +10,12 @@ import tempfile
 import os
 import json
  
-# --- NEW, MULTI-LANGUAGE SUBPROCESS FUNCTION ---
 def run_code_with_subprocess(source_code, language, stdin):
     """
     Saves source code to a temporary file and runs it using subprocess.
     Now supports Python, Java, C++, and JavaScript.
     WARNING: This remains a highly insecure method for demonstration only.
     """
-    # Define language configurations
-    # IDs match the values in your problem_detail.html template
     lang_config = {
         "71": { # Python
             "extension": ".py",
@@ -31,7 +28,6 @@ def run_code_with_subprocess(source_code, language, stdin):
             "run_cmd": ["{executablepath}"]
         },
         "62": { # Java
-            # Note: Java source file MUST be named Main.java
             "extension": ".java",
             "compile_cmd": ["javac", "{filepath}"],
             "run_cmd": ["java", "-classpath", "{dirpath}", "Main"]
@@ -47,18 +43,14 @@ def run_code_with_subprocess(source_code, language, stdin):
     if not config:
         return {"compile_output": "Language not supported.", "stderr": "", "stdout": ""}
 
-    # Create a temporary directory to store all related files
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Determine file paths
         filename = "Main.java" if language == "62" else f"script{config['extension']}"
         filepath = os.path.join(temp_dir, filename)
         executablepath = os.path.join(temp_dir, "a.out")
 
-        # Write the source code to the file
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(source_code)
 
-        # --- Compilation Step (if necessary) ---
         if config["compile_cmd"]:
             compile_command = [
                 part.format(filepath=filepath, executablepath=executablepath)
@@ -69,10 +61,10 @@ def run_code_with_subprocess(source_code, language, stdin):
                     compile_command,
                     capture_output=True,
                     text=True,
-                    timeout=10 # 10-second timeout for compilation
+                    timeout=10 
                 )
                 if compile_result.returncode != 0:
-                    # Compilation failed
+                    
                     return {
                         "compile_output": compile_result.stderr,
                         "stderr": "",
@@ -83,7 +75,6 @@ def run_code_with_subprocess(source_code, language, stdin):
             except Exception as e:
                 return {"compile_output": f"Compilation error: {str(e)}", "stderr": "", "stdout": ""}
 
-        # --- Execution Step ---
         run_command = [
             part.format(filepath=filepath, executablepath=executablepath, dirpath=temp_dir)
             for part in config["run_cmd"]
@@ -96,19 +87,18 @@ def run_code_with_subprocess(source_code, language, stdin):
                 input=normalized_stdin,
                 capture_output=True,
                 text=True,
-                timeout=5 # 5-second timeout for execution
+                timeout=5 
             )
             return {
                 "stdout": run_result.stdout,
                 "stderr": run_result.stderr,
-                "compile_output": "" # Compilation was successful if we reached this point
+                "compile_output": ""
             }
         except subprocess.TimeoutExpired:
             return {"stdout": "", "stderr": "Time Limit Exceeded", "compile_output": ""}
         except Exception as e:
             return {"stdout": "", "stderr": f"An unexpected error occurred: {str(e)}", "compile_output": ""}
 
-# --- VIEWS (no major changes needed, they use the function above) ---
 
 @login_required
 def compile_code(request):
